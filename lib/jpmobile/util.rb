@@ -107,7 +107,11 @@ module Jpmobile
       utf8_str = yen_sign_to_fullwidth_yen_sign(utf8_str)
 
       if utf8_str.respond_to?(:encode)
-        utf8_str.encode(SJIS, :crlf_newline => true)
+        begin
+          utf8_str.encode(SJIS, :crlf_newline => true)
+        rescue ::Encoding::UndefinedConvertionError
+          NKF.nkf("-m0 -x -W --oc=cp932", utf8_str).gsub(/\n/, "\r\n")
+        end
       else
         NKF.nkf("-m0 -x -W --oc=cp932", utf8_str).gsub(/\n/, "\r\n")
       end
