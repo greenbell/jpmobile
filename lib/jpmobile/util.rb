@@ -109,7 +109,7 @@ module Jpmobile
       if utf8_str.respond_to?(:encode)
         begin
           utf8_str.encode(SJIS, :crlf_newline => true)
-        rescue ::Encoding::UndefinedConvertionError
+        rescue ::Encoding::UndefinedConversionError
           NKF.nkf("-m0 -x -W --oc=cp932", utf8_str).gsub(/\n/, "\r\n")
         end
       else
