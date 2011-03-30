@@ -20,6 +20,9 @@ module Jpmobile
     MINUS_SIGN = [0x2212].pack("U")
     FULLWIDTH_HYPHEN_MINUS = [0xFF0D].pack("U")
 
+    YEN_SIGN = [0x00a5].pack("U")
+    FULLWIDTH_YEN_SIGN = [0xffe5].pack("U")
+
     module_function
     def deep_apply(obj, &proc)
       case obj
@@ -100,6 +103,8 @@ module Jpmobile
       utf8_str = emdash_to_horizontal_bar(utf8_str)
       # マイナス対策（不可逆的）
       utf8_str = minus_sign_to_fullwidth_pyphen_minus(utf8_str)
+      # 円マーク対策（不可逆）
+      utf8_str = yen_sign_to_fullwidth_yen_sign(utf8_str)
 
       if utf8_str.respond_to?(:encode)
         utf8_str.encode(SJIS, :crlf_newline => true)
@@ -230,6 +235,10 @@ module Jpmobile
 
     def fullwidth_pyphen_minus_to_minus_sign(utf8_str)
       utf8_str.gsub(FULLWIDTH_HYPHEN_MINUS, MINUS_SIGN)
+    end
+
+    def yen_sign_to_fullwidth_yen_sign(utf8_str)
+      utf8_str.gsub(YEN_SIGN, FULLWIDTH_YEN_SIGN)
     end
 
     def force_encode(str, from, to)
