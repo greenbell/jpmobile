@@ -4,7 +4,7 @@ group :development, :test do
   gem 'jeweler'
   gem 'rails', '~> 3.2.8'
   gem 'rspec'
-  gem 'rspec-rails'
+  gem 'rspec-rails', '~> 2.14'
   gem 'webrat'
   gem 'geokit'
   gem 'sqlite3-ruby'
