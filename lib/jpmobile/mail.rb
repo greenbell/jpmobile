@@ -5,17 +5,6 @@ module Mail
   # encoding patch
   if self.const_defined?(:Ruby19)
     Ruby19.class_eval do
-      def self.b_value_decode(str)
-        match = str.match(/\=\?(.+)?\?[Bb]\?(.+)?\?\=/m)
-        if match
-          encoding = match[1]
-          str = self.decode_base64(match[2])
-          str.force_encoding(respond_to?(:pick_encoding) ? pick_encoding(encoding) : fix_encoding(encoding))
-        end
-        # if str contains some emoticon, the following line raises Encoding error
-        str.encode("utf-8", :invalid => :replace, :replace => "") rescue Jpmobile::Util.ascii_8bit(str)
-      end
-
       # change encoding
       def self.b_value_encode(str, encoding)
         str = Jpmobile::Util.encode(str, encoding.to_s)
@@ -24,15 +13,6 @@ module Mail
     end
   elsif self.const_defined?(:Ruby18)
     Ruby18.class_eval do
-      def self.b_value_decode(str)
-        match = str.match(/\=\?(.+)?\?[Bb]\?(.+)?\?\=/m)
-        if match
-          encoding = match[1]
-          str = Ruby18.decode_base64(match[2])
-        end
-        str
-      end
-
       # change encoding
       def self.b_value_encode(str, encoding)
         str = Jpmobile::Util.encode(str, encoding)
@@ -272,16 +252,9 @@ module Mail
       end
 
       # convert header(s)
-      if self.header[:subject]
-        subject_charset = Jpmobile::Util.extract_charset(self.header[:subject].value)
-        self.header[:subject].charset = subject_charset unless subject_charset.blank?
-
-        if @mobile
-          subject_value = Encodings.value_decode(self.header[:subject].value)
-          subject_converting_encoding = Jpmobile::Util.detect_encoding(subject_value)
-          v = @mobile.to_mail_internal(subject_value, subject_converting_encoding)
-          self.header[:subject].value = Jpmobile::Util.force_encode(v, @mobile.mail_charset(subject_charset), Jpmobile::Util::UTF8)
-        end
+      if header[:subject] && @mobile
+        header[:subject].mobile = @mobile
+        header[:subject].value = header[:subject].decoded
       end
 
       if @body_part_jpmobile and @mobile and !@charset.blank?
@@ -483,8 +456,39 @@ module Mail
       end
     end
 
+    def decoded_with_jpmobile
+      if @mobile
+        return value unless value =~ /\=\?[^?]+\?([QB])\?[^?]*?\?\=/mi
+        Encodings.collapse_adjacent_encodings(value).each do |line|
+          line.gsub!(/\=\?[^?]+\?([QB])\?[^?]*?\?\=/mi) do |string|
+            case $1
+            when 'B','b' then decode_b_value_for_mobile(string)
+            when 'Q','q' then Encodings.q_value_decode(string)
+            else line
+            end
+          end
+        end.join("")
+      else
+        decoded_without_jpmobile
+      end
+    end
+
     alias_method :encoded_without_jpmobile, :encoded
     alias_method :encoded, :encoded_with_jpmobile
+
+    alias_method :decoded_without_jpmobile, :decoded
+    alias_method :decoded, :decoded_with_jpmobile
+
+    def decode_b_value_for_mobile(str)
+      match = str.match(/\=\?(.+)?\?[Bb]\?(.*)\?\=/m)
+      if match
+        charset = match[1]
+        str = RubyVer.decode_base64(match[2])
+        @mobile.decode_transfer_encoding(str, charset)
+      else
+        str
+      end
+    end
   end
 
   class StructuredField
