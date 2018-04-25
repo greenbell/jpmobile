@@ -277,16 +277,21 @@ module Jpmobile
           s.force_encoding(from) unless s.encoding == from_enc
         end
 
-        begin
+      rcnt = 0
+      begin
+        if rcnt == 0
           s.encode(to)
-        rescue ::Encoding::InvalidByteSequenceError, ::Encoding::UndefinedConversionError => e
-          # iPhone MailがISO-2022-JPに半角カナや①などのCP50220文字を含めてくる問題対策
-          if s.encoding == ::Encoding::ISO2022_JP
-            s.force_encoding(::Encoding::CP50220)
-            retry
-          else
-            raise e
-          end
+        else
+          s.encode(to, :invalid => :replace)
+        end
+      rescue ::Encoding::InvalidByteSequenceError, ::Encoding::UndefinedConversionError => e
+        # iPhone MailがISO-2022-JPに半角カナや①などのCP50220文字を含めてくる問題対策
+        if s.encoding == ::Encoding::ISO2022_JP
+          s.force_encoding(::Encoding::CP50220)
+          rcnt = rcnt + 1
+          retry
+        else
+          raise e
         end
       else
         opt = []
