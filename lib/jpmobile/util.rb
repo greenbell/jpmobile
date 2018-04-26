@@ -145,7 +145,7 @@ module Jpmobile
       if utf8_str.respond_to?(:encode)
         utf8_str.
         gsub(/(\r\n|\r|\n)/, "\r\n").
-        encode(JIS, :undef => :replace, :replace => '?')
+        encode(JIS, :undef => :replace, :replace => '?', :invalid => :replace)
       else
         NKF.nkf("-m0 -x -Wj --fb-subchar=63", utf8_str).gsub(/(\r\n|\r|\n)/, "\r\n")
       end
@@ -153,7 +153,7 @@ module Jpmobile
 
     def jis_to_utf8(jis_str)
       if jis_str.respond_to?(:encode)
-        jis_str.encode(UTF8, :universal_newline => true)
+        jis_str.encode(UTF8, :universal_newline => true, :invalid => :replace)
       else
         NKF.nkf("-m0 -x -Jw", jis_str).gsub(/\r\n?/, "\n")
       end
