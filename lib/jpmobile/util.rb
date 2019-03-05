@@ -290,6 +290,11 @@ module Jpmobile
             s.force_encoding(::Encoding::CP50220)
             rcnt = rcnt + 1
             retry
+          # US-ASCIIに\xE3がないため、ASCII上でエラーを起こしたらutf8にforce_encodingする
+          elsif s.encoding == ::Encoding::ASCII
+            s.force_encoding(UTF8)
+            rcnt = rcnt + 1
+            retry
           else
             raise e
           end
