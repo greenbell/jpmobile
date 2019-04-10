@@ -39,7 +39,7 @@ module Jpmobile
       template_paths = reject_files_external_to_app(template_paths) unless outside_app_allowed
 
       template_paths.map do |template|
-        handler, format, variant = extract_handler_and_format_and_variant(template)
+        handler, format = extract_handler_and_format(template, formats)
         contents = File.binread(template)
 
         virtual_path = if format
@@ -58,7 +58,6 @@ module Jpmobile
           handler,
           virtual_path: virtual_path,
           format: format,
-          variant: variant,
           updated_at: mtime(template),
         )
       end
